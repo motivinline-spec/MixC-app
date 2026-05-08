@@ -1,15 +1,14 @@
 const CACHE_NAME = 'mixc-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
 
-// Install event - cache static assets
+// Install event - cache the main page
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      // Only cache the pages we can guarantee exist (relative to SW scope)
+      return cache.addAll(['./', './index.html']).catch(() => {
+        // Silently fail if caching doesn't work
+        console.log('Initial caching skipped');
+      });
     })
   );
   self.skipWaiting();
@@ -66,7 +65,7 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Offline fallback for navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match('./index.html');
         }
         return new Response('Offline', { status: 503 });
       });
